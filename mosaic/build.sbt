@@ -35,6 +35,8 @@ libraryDependencies ++= Seq(
 )
 
 resolvers += Resolver.bintrayRepo("azavea", "geotrellis")
+resolvers += Resolver.bintrayRepo("scalaz", "releases")
+resolvers += "OpenGeo" at "https://boundless.artifactoryonline.com/boundless/main"
 
 test in assembly := {}
 
