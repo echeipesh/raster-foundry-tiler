@@ -22,56 +22,52 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    ConfigParser.parse(args, Config()) match {
-      case None => //print error from scopt
-      case Some(config) =>
-
-      val status = new Status(config.statusQueue, config.publishNotifications)
-
-      val jobRequest = {
-        val uri = config.chunkerResult
-        new java.net.URI(uri).getScheme match {
-          case null =>
-          scala.io.Source.fromFile(uri).getLines.mkString.parseJson.convertTo[JobRequest]
-          case _ =>
-          S3Client.default.readTextFile(uri).parseJson.convertTo[JobRequest]
-        }
+    val config = ConfigParser.parse(args, Config()).getOrElse(sys.exit())
+    val status = new Status(config.statusQueue, config.publishNotifications)
+    
+    val jobRequest = {
+      val uri = config.chunkerResult
+      new java.net.URI(uri).getScheme match {
+        case null =>
+        scala.io.Source.fromFile(uri).getLines.mkString.parseJson.convertTo[JobRequest]
+        case _ =>
+        S3Client.default.readTextFile(uri).parseJson.convertTo[JobRequest]
       }
-
-      status.notifyStart(jobRequest.id)
-
-      implicit val sc = getSparkContext()
-
-      try {
-        val inputImages: Seq[InputImageRDD] =
-        jobRequest.inputImages
-
-        val createSink: () => Sink = {
-          val parsedTarget = new java.net.URI(jobRequest.target)
-          parsedTarget.getScheme match {
-            case null =>
-              { () => new LocalSink(jobRequest.target) }
-            case "s3" =>
-              val bucket = parsedTarget.getHost
-              val path = parsedTarget.getPath
-              val key = path.substring(1, path.length)
-
-              { () => new S3Sink(bucket, key) }
-            case x =>
-              throw new NotImplementedError(s"No sink implemented for scheme $x")
-          }
-        }
-
-        Tiler(inputImages)(createSink)
-      } catch {
-        case e: Exception =>
-          status.notifyFailure(jobRequest.id, e)
-          throw e
-      } finally {
-        sc.stop
-      }
-
-      status.notifySuccess(jobRequest.id, jobRequest.target, jobRequest.inputImageDefinitions.map(_.sourceUri))
     }
+
+    status.notifyStart(jobRequest.id)
+
+    implicit val sc = getSparkContext()
+
+    try {
+      val inputImages: Seq[InputImageRDD] =
+      jobRequest.inputImages
+
+      val createSink: () => Sink = {
+        val parsedTarget = new java.net.URI(jobRequest.target)
+        parsedTarget.getScheme match {
+          case null =>
+            { () => new LocalSink(jobRequest.target) }
+          case "s3" =>
+            val bucket = parsedTarget.getHost
+            val path = parsedTarget.getPath
+            val key = path.substring(1, path.length)
+
+            { () => new S3Sink(bucket, key) }
+          case x =>
+            throw new NotImplementedError(s"No sink implemented for scheme $x")
+        }
+      }
+
+      Tiler(inputImages)(createSink)
+    } catch {
+      case e: Exception =>
+        status.notifyFailure(jobRequest.id, e)
+        throw e
+    } finally {
+      sc.stop
+    }
+
+    status.notifySuccess(jobRequest.id, jobRequest.target, jobRequest.inputImageDefinitions.map(_.sourceUri))
   }
 }
