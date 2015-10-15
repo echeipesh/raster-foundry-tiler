@@ -21,5 +21,5 @@ object ConfigParser extends OptionParser[Config]("scopt") {
 
   opt[String]("status-queue") optional() action { (x, c) => c.copy(statusQueue = x) } text("SQS URL")
 
-  opt[Boolean]("publich-notifications") optional() action { (x, c) => c.copy(publishNotifications = x) } text("SQS notifications flag")
+  opt[Boolean]("publich-notifications") optional() action { (x, c) => c.copy(publishNotifications = x) } text("SQS notifications flag (true/false)")
 }
