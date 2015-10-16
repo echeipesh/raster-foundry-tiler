@@ -9,17 +9,14 @@ import org.apache.commons.io._
 import java.io.{InputStream, ByteArrayOutputStream, ByteArrayInputStream, DataInputStream }
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import com.typesafe.scalalogging.slf4j._
 
-class Status(val queueUrl: String, publish: Boolean = true) {
+class Status(val queueUrl: String) extends LazyLogging {
   def sendNotification(msg: String): Unit = {
-    if (publish) {
-      val req = new SendMessageRequest(queueUrl, msg)
-      val client = new AmazonSQSClient()
-      val result = client.sendMessage(req)
-      println("MessageId - " + result.getMessageId);
-    } else {
-      println(s"Suppressed SQS: $msg")
-    }       
+    val req = new SendMessageRequest(queueUrl, msg)
+    val client = new AmazonSQSClient()
+    val result = client.sendMessage(req)
+    logger.info(s"MessageId: ${result.getMessageId}, Message: $msg");
   }
 
   def notifyStart(jobId: String): Unit =

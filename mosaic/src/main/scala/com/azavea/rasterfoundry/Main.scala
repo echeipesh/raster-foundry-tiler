@@ -6,10 +6,10 @@ import org.apache.spark._
 import org.apache.spark.rdd._
 import geotrellis.raster._
 import geotrellis.spark._
-
+import com.typesafe.scalalogging.slf4j._
 import spray.json._
 
-object Main {
+object Main extends LazyLogging {
   def getSparkContext(): SparkContext = {
     val conf =
       new SparkConf()
@@ -23,8 +23,9 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val config = ConfigParser.parse(args, Config()).getOrElse(sys.exit())
-    val status = new Status(config.statusQueue, config.publishNotifications)
-    
+    val status = new Status(config.statusQueue)        
+    logger.info(s"Status Queue: ${config.statusQueue}")
+
     val jobRequest = {
       val uri = config.chunkerResult
       new java.net.URI(uri).getScheme match {
@@ -34,6 +35,7 @@ object Main {
         S3Client.default.readTextFile(uri).parseJson.convertTo[JobRequest]
       }
     }
+    logger.info(s"Target: {jobRequest.target}")
 
     status.notifyStart(jobRequest.id)
 
