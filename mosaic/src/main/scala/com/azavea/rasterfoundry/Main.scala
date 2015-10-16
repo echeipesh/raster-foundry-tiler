@@ -13,10 +13,10 @@ object Main {
   def getSparkContext(): SparkContext = {
     val conf =
       new SparkConf()
-      .setIfMissing("spark.master", "local[8]")
-      .setIfMissing("spark.app.name", "Raster Foundry Tiler")
-      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      .set("spark.kryo.registrator", classOf[KryoRegistrator].getName)
+        .setIfMissing("spark.master", "local[8]")
+        .setIfMissing("spark.app.name", "Raster Foundry Tiler")
+        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+        .set("spark.kryo.registrator", classOf[KryoRegistrator].getName)
 
     new SparkContext(conf)
   }
