@@ -1,0 +1,13 @@
+sudo: required
+
+language: scala
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/
+
+script:
+  - pushd mosaic
+  - ./sbt test
+  - popd
